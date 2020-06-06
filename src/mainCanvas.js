@@ -90,13 +90,11 @@ const initThreeCanvas = () => {
       0.1,
       1000
     );
-    camera.position.set(0, 0, 10);
-    camera.rotation.z = Math.PI;
+    camera.position.set(0, 1, 0);
   };
 
   const addControls = () => {
     controls = new PointerLockControls(camera, document.body);
-    controls.lock();
     scene.add(controls.getObject());
 
     const onKeyDown = function (event) {
@@ -143,6 +141,23 @@ const initThreeCanvas = () => {
 
     document.addEventListener("keydown", onKeyDown, false);
     document.addEventListener("keyup", onKeyUp, false);
+
+    const blocker = document.getElementById("blocker");
+    blocker.addEventListener(
+      "click",
+      () => {
+        controls.lock();
+      },
+      false
+    );
+
+    controls.addEventListener("lock", () => {
+      blocker.style.display = "none";
+    });
+
+    controls.addEventListener("unlock", () => {
+      blocker.style.display = "block";
+    });
   };
   const initAndAttachCanvas = () => {
     const selfHtmlNode = document.getElementById("mainCanvas");
@@ -173,14 +188,12 @@ const initThreeCanvas = () => {
       obj.mixer.update(clock.getDelta());
     });
 
-    //const delta = clock.getDelta() * 100;
     var time = performance.now();
     var delta = (time - prevTime) / 1000;
 
     const velFactor = 10.0;
     velocity.x -= velocity.x * velFactor * delta;
     velocity.z -= velocity.z * velFactor * delta;
-    //velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
 
     direction.z = Number(moveForward) - Number(moveBackward);
     direction.x = Number(moveRight) - Number(moveLeft);
@@ -190,7 +203,7 @@ const initThreeCanvas = () => {
     if (moveLeft || moveRight) velocity.x -= direction.x * 10.0 * delta;
 
     controls.moveRight(-velocity.x * delta);
-    controls.moveForward(velocity.z * delta);
+    controls.moveForward(-velocity.z * delta);
 
     prevTime = time;
 
