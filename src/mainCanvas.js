@@ -1,22 +1,31 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
+
+let scene;
+let camera;
+let controls;
+let renderer;
+let clock = new THREE.Clock();
+const loader = new GLTFLoader();
+let gltfObjs = [];
+
+var prevTime = performance.now();
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
 
 const initThreeCanvas = () => {
-  let scene;
-  let camera;
-  let renderer;
-  let clock = new THREE.Clock();
-  const loader = new GLTFLoader();
-  let gltfObjs = [];
-
   const loadGltf = (filePath) => {
     loader.load(filePath, (gltf) => {
       const mixer = new THREE.AnimationMixer(gltf.scene);
-      for (const anim of gltf.animations) {
-        mixer.clipAction(anim).play();
-      }
       gltfObjs.push({ gltf, mixer });
+      gltf.scene.scale.set(1, 1, 1);
       scene.add(gltf.scene);
     });
   };
@@ -85,6 +94,56 @@ const initThreeCanvas = () => {
     camera.rotation.z = Math.PI;
   };
 
+  const addControls = () => {
+    controls = new PointerLockControls(camera, document.body);
+    controls.lock();
+    scene.add(controls.getObject());
+
+    const onKeyDown = function (event) {
+      switch (event.keyCode) {
+        case 38: // up
+        case 87: // w
+          moveForward = true;
+          break;
+        case 37: // left
+        case 65: // a
+          moveLeft = true;
+          break;
+        case 40: // down
+        case 83: // s
+          moveBackward = true;
+          break;
+        case 39: // right
+        case 68: // d
+          moveRight = true;
+          break;
+      }
+    };
+
+    const onKeyUp = function (event) {
+      switch (event.keyCode) {
+        case 38: // up
+        case 87: // w
+          moveForward = false;
+          break;
+        case 37: // left
+        case 65: // a
+          moveLeft = false;
+          break;
+        case 40: // down
+        case 83: // s
+          moveBackward = false;
+          break;
+        case 39: // right
+        case 68: // d
+          moveRight = false;
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, false);
+    document.addEventListener("keyup", onKeyUp, false);
+  };
   const initAndAttachCanvas = () => {
     const selfHtmlNode = document.getElementById("mainCanvas");
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -104,15 +163,38 @@ const initThreeCanvas = () => {
   initAndAttachCanvas();
   initScene();
   addCamera();
+  addControls();
   addLights();
-  loadGltf("resources/origin.glb");
+  loadGltf("resources/gallery01.glb");
   resizeCanvasToDisplaySize();
 
   const animate = () => {
-    renderer.render(scene, camera);
     gltfObjs.forEach((obj) => {
       obj.mixer.update(clock.getDelta());
     });
+
+    //const delta = clock.getDelta() * 100;
+    var time = performance.now();
+    var delta = (time - prevTime) / 1000;
+
+    const velFactor = 10.0;
+    velocity.x -= velocity.x * velFactor * delta;
+    velocity.z -= velocity.z * velFactor * delta;
+    //velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+    direction.z = Number(moveForward) - Number(moveBackward);
+    direction.x = Number(moveRight) - Number(moveLeft);
+    direction.normalize(); // this ensures consistent movements in all directions
+
+    if (moveForward || moveBackward) velocity.z -= direction.z * 10.0 * delta;
+    if (moveLeft || moveRight) velocity.x -= direction.x * 10.0 * delta;
+
+    controls.moveRight(-velocity.x * delta);
+    controls.moveForward(velocity.z * delta);
+
+    prevTime = time;
+
+    renderer.render(scene, camera);
     requestAnimationFrame(animate);
   };
   animate();
