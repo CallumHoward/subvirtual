@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { FpControls } from "./controls";
+import { Sketch1 } from "./sketch1";
 
 const initThreeCanvas = () => {
   let scene;
@@ -11,6 +12,8 @@ const initThreeCanvas = () => {
   let clock = new THREE.Clock();
   const loader = new GLTFLoader();
   let gltfObjs = [];
+
+  const sketch1 = Sketch1(500, 500);
 
   const loadGltf = (filePath) => {
     loader.load(filePath, (gltf) => {
@@ -93,6 +96,17 @@ const initThreeCanvas = () => {
     scene.add(controls.getObject());
   };
 
+  const addCube = () => {
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      map: sketch1.renderTarget.texture,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = 1;
+    mesh.position.z = -5;
+    scene.add(mesh);
+  };
+
   const initAndAttachCanvas = () => {
     const selfHtmlNode = document.getElementById("mainCanvas");
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -109,24 +123,32 @@ const initThreeCanvas = () => {
     });
   };
 
-  const animate = () => {
-    gltfObjs.forEach((obj) => {
-      obj.mixer.update(clock.getDelta());
-    });
-
-    controls.update();
-
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  };
-
   initAndAttachCanvas();
   initScene();
   addCamera();
   addControls();
   addLights();
   loadGltf("resources/gallery01.glb");
+  addCube();
   resizeCanvasToDisplaySize();
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+
+    gltfObjs.forEach((obj) => {
+      obj.mixer.update(clock.getDelta());
+    });
+
+    controls.update();
+
+    renderer.setRenderTarget(sketch1.renderTarget);
+    renderer.clear();
+    renderer.render(sketch1.scene, sketch1.camera);
+
+    renderer.setRenderTarget(null);
+    renderer.clear();
+    renderer.render(scene, camera);
+  };
 
   animate();
 };
