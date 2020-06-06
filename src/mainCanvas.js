@@ -3,15 +3,15 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { FpControls } from "./controls";
 
-let scene;
-let camera;
-let controls;
-let renderer;
-let clock = new THREE.Clock();
-const loader = new GLTFLoader();
-let gltfObjs = [];
-
 const initThreeCanvas = () => {
+  let scene;
+  let camera;
+  let controls;
+  let renderer;
+  let clock = new THREE.Clock();
+  const loader = new GLTFLoader();
+  let gltfObjs = [];
+
   const loadGltf = (filePath) => {
     loader.load(filePath, (gltf) => {
       const mixer = new THREE.AnimationMixer(gltf.scene);
@@ -109,14 +109,6 @@ const initThreeCanvas = () => {
     });
   };
 
-  initAndAttachCanvas();
-  initScene();
-  addCamera();
-  addControls();
-  addLights();
-  loadGltf("resources/gallery01.glb");
-  resizeCanvasToDisplaySize();
-
   const animate = () => {
     gltfObjs.forEach((obj) => {
       obj.mixer.update(clock.getDelta());
@@ -127,6 +119,15 @@ const initThreeCanvas = () => {
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   };
+
+  initAndAttachCanvas();
+  initScene();
+  addCamera();
+  addControls();
+  addLights();
+  loadGltf("resources/gallery01.glb");
+  resizeCanvasToDisplaySize();
+
   animate();
 };
 
