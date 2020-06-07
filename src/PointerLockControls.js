@@ -37,8 +37,8 @@ var PointerLockControls = function (camera, domElement) {
 
     var movementX =
       event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-    var movementY =
-      event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+    var movementY = 0;
+    //event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
     euler.setFromQuaternion(camera.quaternion);
 
