@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
+import { PointerLockControls } from "./PointerLockControls";
 
 export const FpControls = (camera, body, blocker) => {
   let controls = new PointerLockControls(camera, body);
