@@ -15,6 +15,8 @@ const initThreeCanvas = () => {
   const loader = new GLTFLoader();
   let gltfObjs = [];
 
+  // let collidableMeshList = [];
+
   const sketch1 = Sketch1(500, 500);
 
   const loadGltf = (filePath) => {
@@ -22,6 +24,10 @@ const initThreeCanvas = () => {
       const mixer = new THREE.AnimationMixer(gltf.scene);
       gltfObjs.push({ gltf, mixer });
       gltf.scene.scale.set(1, 1, 1);
+      console.log("LOG gltf: ", gltf);
+      for (const child of gltf.scene.children[1].children) {
+        controls.addCollidable(child);
+      }
       scene.add(gltf.scene);
     });
   };
@@ -99,6 +105,7 @@ const initThreeCanvas = () => {
       document.getElementById("blocker")
     );
     scene.add(controls.getObject());
+    scene.add(controls.getBoundingBox());
   };
 
   const addCube = () => {
@@ -111,6 +118,116 @@ const initThreeCanvas = () => {
     mesh.position.z = -5;
     scene.add(mesh);
     controls.addCollidable(mesh);
+    // collidableMeshList.push(mesh);
+  };
+
+  const addMovingCube = () => {
+    const movingCubeGeometry = new THREE.CubeGeometry(1.2, 1.2, 1.2, 2, 2, 2);
+    const wireMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      opacity: 0,
+      transparent: true,
+    });
+    const movingCube = new THREE.Mesh(movingCubeGeometry, wireMaterial);
+    scene.add(movingCube);
+
+    const moveDistance = 0.1;
+    let moveForward = false;
+    let moveBackward = false;
+    let moveLeft = false;
+    let moveRight = false;
+
+    // set up keyboard controls
+    const onKeyDown = function (event) {
+      switch (event.keyCode) {
+        case 73: // w
+          moveForward = true;
+          break;
+        case 74: // a
+          moveLeft = true;
+          break;
+        case 75: // s
+          moveBackward = true;
+          break;
+        case 76: // d
+          moveRight = true;
+          break;
+      }
+    };
+
+    const onKeyUp = function (event) {
+      switch (event.keyCode) {
+        case 73: // i
+          moveForward = false;
+          break;
+        case 74: // j
+          moveLeft = false;
+          break;
+        case 75: // k
+          moveBackward = false;
+          break;
+        case 76: // l
+          moveRight = false;
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, false);
+    document.addEventListener("keyup", onKeyUp, false);
+
+    const update = () => {
+      if (moveForward) {
+        movingCube.position.z -= moveDistance;
+      } else if (moveBackward) {
+        movingCube.position.z += moveDistance;
+      } else if (moveLeft) {
+        movingCube.position.x -= moveDistance;
+      } else if (moveRight) {
+        movingCube.position.x += moveDistance;
+      }
+
+      // collision detection:
+      //   determines if any of the rays from the cube's origin to each vertex
+      //    intersects any face of a mesh in the array of target meshes
+      //   for increased collision accuracy, add more vertices to the cube;
+      //    for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
+      //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
+      var originPoint = movingCube.position.clone();
+
+      for (
+        let vertexIndex = 0;
+        vertexIndex < movingCube.geometry.vertices.length;
+        vertexIndex++
+      ) {
+        let localVertex = movingCube.geometry.vertices[vertexIndex].clone();
+        let globalVertex = localVertex.applyMatrix4(movingCube.matrix);
+        let directionVector = globalVertex.sub(movingCube.position);
+
+        let ray = new THREE.Raycaster(
+          originPoint,
+          directionVector.clone().normalize()
+        );
+        let collisionResults = ray.intersectObjects(collidableMeshList);
+        if (
+          collisionResults.length > 0 &&
+          collisionResults[0].distance < directionVector.length()
+        ) {
+          console.log("collision");
+          if (moveForward) {
+            movingCube.position.z += moveDistance * 2;
+          } else if (moveBackward) {
+            movingCube.position.z -= moveDistance * 2;
+          } else if (moveLeft) {
+            movingCube.position.x += moveDistance * 2;
+          } else if (moveRight) {
+            movingCube.position.x -= moveDistance * 2;
+          }
+          break;
+        }
+      }
+    };
+
+    return { update };
   };
 
   const initAndAttachCanvas = () => {
@@ -136,6 +253,7 @@ const initThreeCanvas = () => {
   addLights();
   loadGltf("resources/gallery24.glb");
   addCube();
+  // const movingCube = addMovingCube();
   resizeCanvasToDisplaySize();
 
   const animate = () => {
@@ -146,6 +264,7 @@ const initThreeCanvas = () => {
     });
 
     controls.update();
+    // movingCube.update();
 
     renderer.setRenderTarget(sketch1.renderTarget);
     renderer.clear();

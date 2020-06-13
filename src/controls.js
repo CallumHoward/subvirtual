@@ -16,7 +16,14 @@ export const FpControls = (camera, body, blocker) => {
     10
   );
 
-  console.log("LOG raycaster: ", raycaster);
+  const size = 1.2;
+  const cubeGeometry = new THREE.CubeGeometry(size, size, size, 2, 2, 2);
+  const transparentMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    opacity: 0.5,
+    transparent: true,
+  });
+  const boundingBox = new THREE.Mesh(cubeGeometry, transparentMaterial);
 
   let moveForward = false;
   let moveBackward = false;
@@ -87,19 +94,47 @@ export const FpControls = (camera, body, blocker) => {
   });
 
   const addCollidable = (object) => {
-    collidableObjects.push(object);
-    console.log(collidableObjects);
+    if (object) {
+      collidableObjects.push(object);
+    }
+    console.log("LOG collidableObjects: ", collidableObjects);
   };
+
+  const colliding = () => {
+    boundingBox.position.copy(controls.getObject().position);
+    boundingBox.rotation.copy(controls.getObject().rotation);
+    const originPoint = boundingBox.position.clone();
+
+    for (let i = 0; i < boundingBox.geometry.vertices.length; i++) {
+      const localVertex = boundingBox.geometry.vertices[i].clone();
+      const globalVertex = localVertex.applyMatrix4(boundingBox.matrix);
+      const directionVector = globalVertex.sub(boundingBox.position);
+
+      const raycaster = new THREE.Raycaster(
+        originPoint,
+        directionVector.clone().normalize()
+      );
+
+      const intersections = raycaster.intersectObjects(collidableObjects);
+      if (
+        intersections.length > 0 &&
+        intersections[0].distance < directionVector.length()
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  let updateCount = 0;
 
   const update = () => {
     if (controls.isLocked) {
-      raycaster.ray.origin.copy(controls.getObject().position);
-      raycaster.ray.origin.z -= 10;
-      const intersections = raycaster.intersectObjects(collidableObjects, true);
+      const time = performance.now();
+      const delta = (time - prevTime) / 1000;
+      updateCount++;
 
-      var time = performance.now();
-      var delta = (time - prevTime) / 1000;
-
+      // Movement
       const velFactor = 10.0;
       velocity.x -= velocity.x * velFactor * delta;
       velocity.z -= velocity.z * velFactor * delta;
@@ -111,17 +146,22 @@ export const FpControls = (camera, body, blocker) => {
       if (moveForward || moveBackward) velocity.z -= direction.z * 10.0 * delta;
       if (moveLeft || moveRight) velocity.x -= direction.x * 10.0 * delta;
 
-      if (intersections > 0) {
-        console.log("intersecting!");
-        velocity.z = 0;
-      } else {
-        controls.moveRight(-velocity.x * delta);
-        controls.moveForward(-velocity.z * delta);
+      controls.moveRight(-velocity.x * delta);
+      controls.moveForward(-velocity.z * delta);
+
+      if (colliding()) {
+        controls.moveRight(velocity.x * delta * 2.1);
+        controls.moveForward(velocity.z * delta * 2.1);
       }
 
       prevTime = time;
     }
   };
 
-  return { update, getObject: controls.getObject, addCollidable };
+  return {
+    update,
+    getObject: controls.getObject,
+    addCollidable,
+    getBoundingBox: () => boundingBox,
+  };
 };
