@@ -77,6 +77,9 @@ const initThreeCanvas = () => {
     );
     // const cameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
     // scene.add(cameraHelper);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1, 300);
+    scene.add(ambientLight);
   };
 
   const addCamera = () => {
@@ -99,7 +102,7 @@ const initThreeCanvas = () => {
   };
 
   const addCube = () => {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const geometry = new THREE.CubeGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
       map: sketch1.renderTarget.texture,
     });
@@ -107,6 +110,7 @@ const initThreeCanvas = () => {
     mesh.position.y = 1;
     mesh.position.z = -5;
     scene.add(mesh);
+    controls.addCollidable(mesh);
   };
 
   const initAndAttachCanvas = () => {
@@ -130,7 +134,7 @@ const initThreeCanvas = () => {
   addCamera();
   addControls();
   addLights();
-  loadGltf("resources/gallery01.glb");
+  loadGltf("resources/gallery24.glb");
   addCube();
   resizeCanvasToDisplaySize();
 

@@ -8,6 +8,15 @@ export const FpControls = (camera, body, blocker) => {
   let prevTime = performance.now();
   const velocity = new THREE.Vector3();
   const direction = new THREE.Vector3();
+  const collidableObjects = [];
+  const raycaster = new THREE.Raycaster(
+    new THREE.Vector3(),
+    new THREE.Vector3(0, 0, -1),
+    0,
+    10
+  );
+
+  console.log("LOG raycaster: ", raycaster);
 
   let moveForward = false;
   let moveBackward = false;
@@ -77,8 +86,17 @@ export const FpControls = (camera, body, blocker) => {
     blocker.style.display = "block";
   });
 
+  const addCollidable = (object) => {
+    collidableObjects.push(object);
+    console.log(collidableObjects);
+  };
+
   const update = () => {
     if (controls.isLocked) {
+      raycaster.ray.origin.copy(controls.getObject().position);
+      raycaster.ray.origin.z -= 10;
+      const intersections = raycaster.intersectObjects(collidableObjects, true);
+
       var time = performance.now();
       var delta = (time - prevTime) / 1000;
 
@@ -93,12 +111,17 @@ export const FpControls = (camera, body, blocker) => {
       if (moveForward || moveBackward) velocity.z -= direction.z * 10.0 * delta;
       if (moveLeft || moveRight) velocity.x -= direction.x * 10.0 * delta;
 
-      controls.moveRight(-velocity.x * delta);
-      controls.moveForward(-velocity.z * delta);
+      if (intersections > 0) {
+        console.log("intersecting!");
+        velocity.z = 0;
+      } else {
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+      }
 
       prevTime = time;
     }
   };
 
-  return { update, getObject: controls.getObject };
+  return { update, getObject: controls.getObject, addCollidable };
 };
