@@ -25,9 +25,11 @@ const initThreeCanvas = () => {
       gltfObjs.push({ gltf, mixer });
       gltf.scene.scale.set(1, 1, 1);
       console.log("LOG gltf: ", gltf);
-      for (const child of gltf.scene.children[1].children) {
-        controls.addCollidable(child);
-      }
+      const collisionMeshGroup = gltf.scene.children.find(
+        (e) => e.name === "CollisionMesh"
+      );
+      collisionMeshGroup.visible = false;
+      controls.addCollidable(collisionMeshGroup);
       scene.add(gltf.scene);
     });
   };
@@ -251,7 +253,7 @@ const initThreeCanvas = () => {
   addCamera();
   addControls();
   addLights();
-  loadGltf("resources/gallery24.glb");
+  loadGltf("resources/gallery52.glb");
   addCube();
   // const movingCube = addMovingCube();
   resizeCanvasToDisplaySize();

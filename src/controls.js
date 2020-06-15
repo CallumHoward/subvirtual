@@ -16,7 +16,7 @@ export const FpControls = (camera, body, blocker) => {
     10
   );
 
-  const size = 1.2;
+  const size = 0.2;
   const cubeGeometry = new THREE.CubeGeometry(size, size, size, 2, 2, 2);
   const transparentMaterial = new THREE.MeshBasicMaterial({
     color: 0xff0000,
