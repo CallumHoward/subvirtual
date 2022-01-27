@@ -14,7 +14,7 @@
     "@babel/runtime": "^7.9.6",
     "regenerator-runtime": "^0.13.5",
     "stats.js": "^0.17.0",
-    "three": "^0.116.1"
+    "three": "^0.137.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
